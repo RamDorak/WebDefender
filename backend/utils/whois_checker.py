@@ -1,4 +1,5 @@
 import requests
+import re
 
 def check_domain_age(url):
     domain = re.sub(r'https?://', '', url).split('/')[0]
