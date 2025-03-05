@@ -1,19 +1,21 @@
 {
-    "manifest_version": 3,
-    "name": "WebDefender",
-    "version": "1.0",
-    "permissions": ["scripting", "storage", "activeTab"],
-    "host_permissions": ["<all_urls>"],
+    "manifest_version": 2,
+    "name": "Phishing Detective",
+    "version": "0.1",
+    "icons": { 
+          "16": "detective.png",
+          "48": "detective.png",
+          "128": "detective.png" 
+     },
     "background": {
-        "service_worker": "background.js"
-    },
-    "action": {
-        "default_popup": "popup/popup.html"
-    },
+          "scripts": ["background.js"]
+     },
     "content_scripts": [
         {
-            "matches": ["<all_urls>"],
-            "js": ["content.js"]
+          "matches": [
+            "<all_urls>"
+          ],
+          "js": ["jquery-3.1.1.min.js","content.js"]
         }
-    ]
-}
+     ]
+  }
