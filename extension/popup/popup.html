@@ -1,29 +1,28 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <title>WebDefender - Check URL</title>
+    <title>Phishing Report</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            padding: 10px;
-            width: 300px;
-        }
-        #resultText {
-            margin-top: 10px;
-            font-weight: bold;
-        }
-        button {
-            padding: 5px 10px;
-            cursor: pointer;
-        }
+        body { font-family: Arial, sans-serif; width: 300px; }
+        h2 { text-align: center; }
+        ul { list-style-type: none; padding: 0; }
+        li { padding: 5px; border-bottom: 1px solid #ccc; }
+        .phishing { color: red; }
     </style>
 </head>
 <body>
-    <h3>WebDefender</h3>
-    <p><strong>Current URL:</strong></p>
-    <p id="urlDisplay">Loading...</p>
-    <button id="checkButton">Recheck This Site</button>
-    <p id="resultText"></p>
-    <script src="popup.js"></script>
+    <h2>Phishing Report</h2>
+    <ul id="history"></ul>
+
+    <script>
+        chrome.storage.local.get({history: []}, function(result) {
+            const historyList = document.getElementById('history');
+            result.history.forEach(item => {
+                const li = document.createElement('li');
+                li.innerHTML = `<a href="${item.url}" target="_blank">${item.url}</a> - <span class="phishing">${item.prediction}</span>`;
+                historyList.appendChild(li);
+            });
+        });
+    </script>
 </body>
 </html>
