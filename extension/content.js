@@ -1,4 +1,3 @@
-// Function to extract features
 function extractFeatures() {
     return [
         isIPInURL(),
@@ -29,30 +28,32 @@ function extractFeatures() {
     ];
 }
 
-// Send extracted features to `background.js` for ONNX inference
-function predictPhishing() {
+// Extract features and predict phishing status
+async function checkPhishing() {
     const features = extractFeatures();
-    console.log("Extracted Features:", features); // Debugging
+    console.log("Extracted Features:", features);
 
+    // Send features to background script for prediction
     chrome.runtime.sendMessage(
         { action: "predictPhishing", features: features },
         (response) => {
-            if (response?.result === "phishing") {
+            if (response.error) {
+                console.error("Prediction error:", response.error);
+                return;
+            }
+            if (response.result === "phishing") {
                 alert("⚠️ Phishing Website Detected!");
-            } else if (response?.result === "safe") {
-                console.log("✅ This site seems legit.");
             } else {
-                console.error("❌ Error in ONNX Prediction:", response?.error);
+                console.log("✅ This site seems legit.");
             }
         }
     );
 }
 
-// Run prediction when the page loads
-window.addEventListener("load", predictPhishing);
+// Run when page loads
+window.addEventListener("load", checkPhishing);
 
-// ===================== Feature Extraction Functions =====================
-
+// Feature Extraction Functions
 function isIPInURL() {
     var reg = /\d{1,3}[.]\d{1,3}[.]\d{1,3}[.]\d{1,3}/;
     return reg.test(window.location.href) ? 1 : -1;

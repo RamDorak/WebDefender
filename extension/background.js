@@ -1,45 +1,29 @@
-// background.js (Manifest V3-compatible)
+import * as ort from './libs/ort.min.js';
 
-// Import ONNX InferenceSession
-import { InferenceSession } from "./scripts/onnx.min.js"; 
+async function loadModel() {
+    return await ort.InferenceSession.create(chrome.runtime.getURL("../models/phishing_model.onnx"));
+}
 
-// ONNX Model Path (Stored inside extension)
-const MODEL_PATH = chrome.runtime.getURL("models/phishing_model.onnx");
-
-// ONNX Model (Loaded in memory)
-let modelSession = null;
-
-// Load ONNX Model on Extension Install/Startup
-chrome.runtime.onInstalled.addListener(async () => {
+async function predict(features) {
     try {
-        modelSession = await InferenceSession.create(MODEL_PATH);
-        console.log("✅ ONNX model loaded successfully!");
+        const model = await loadModel();
+        const tensor = new ort.Tensor("float32", new Float32Array(features), [1, features.length]);
+        const feeds = { input: tensor };
+        const results = await model.run(feeds);
+        return results.output.data[0];
     } catch (error) {
-        console.error("❌ ONNX model failed to load:", error);
+        console.error("ONNX Prediction Error:", error);
+        return null;
     }
-});
+}
 
-// Listen for messages from content scripts
-chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
-    if (message.action === "predictPhishing") {
-        if (!modelSession) {
-            sendResponse({ error: "ONNX model not loaded" });
-            return true; // Keep the response channel open
-        }
-
-        try {
-            const inputTensor = new ort.Tensor("float32", new Float32Array(message.features), [1, message.features.length]);
-            const feeds = { input: inputTensor };
-
-            const results = await modelSession.run(feeds);
-            const prediction = results.output.data[0];
-
-            sendResponse({ result: prediction > 0.5 ? "phishing" : "safe" });
-        } catch (error) {
-            console.error("❌ ONNX inference error:", error);
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    if (request.action === "predictPhishing") {
+        predict(request.features).then(result => {
+            sendResponse({ result: result > 0.5 ? "phishing" : "safe" });
+        }).catch(error => {
             sendResponse({ error: error.message });
-        }
-
-        return true; // Required for async responses
+        });
+        return true;
     }
 });
