@@ -1,12 +1,21 @@
+// Initialize ONNX Runtime
 import * as ort from './libs/ort.min.js';
 
 async function loadModel() {
-    return await ort.InferenceSession.create(chrome.runtime.getURL("../models/phishing_model.onnx"));
+    try {
+        return await ort.InferenceSession.create(chrome.runtime.getURL("../models/phishing_model.onnx"));
+    } catch (error) {
+        console.error("Model loading error:", error);
+        return null;
+    }
 }
 
 async function predict(features) {
     try {
         const model = await loadModel();
+        if (!model) {
+            throw new Error("Failed to load model");
+        }
         const tensor = new ort.Tensor("float32", new Float32Array(features), [1, features.length]);
         const feeds = { input: tensor };
         const results = await model.run(feeds);
