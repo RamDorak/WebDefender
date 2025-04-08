@@ -54,6 +54,10 @@ async function checkPhishing() {
         chrome.runtime.sendMessage(
             { action: "predictPhishing", features: features },
             (response) => {
+                if (chrome.runtime.lastError) {
+                    console.error("Message sending error:", chrome.runtime.lastError.message);
+                    return;
+                }
                 if (response.error) {
                     console.error("Prediction error:", response.error);
                     return;
@@ -104,14 +108,15 @@ async function checkPhishing() {
 }
 
 // Wait for DOM to be ready and featureConfig to be available
-function initialize() {
-    if (typeof featureConfig === 'undefined') {
-        // If featureConfig is not available, wait and try again
-        setTimeout(initialize, 100);
+function initialize(retryCount = 0) {
+    if (retryCount > 10) {
+        console.error("Failed to initialize after multiple retries.");
         return;
     }
-    
-    // Run phishing check when featureConfig is available
+    if (typeof featureConfig === 'undefined') {
+        setTimeout(() => initialize(retryCount + 1), 100);
+        return;
+    }
     checkPhishing();
 }
 

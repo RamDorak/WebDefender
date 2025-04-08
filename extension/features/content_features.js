@@ -29,7 +29,7 @@ const contentFeatures = {
     },
     
     hasPopupWindow: () => {
-        return document.querySelectorAll("script[popup]").length > 0 ? 1 : -1;
+        return typeof window.open === "function" ? 1 : -1;
     },
     
     hasIframeRedirection: () => {
@@ -43,4 +43,4 @@ const contentFeatures = {
     hasStatisticalReport: () => {
         return document.querySelectorAll("script").length > 5 ? 1 : -1;
     }
-}; 
+};

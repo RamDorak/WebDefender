@@ -19,7 +19,6 @@
       "matches": ["<all_urls>"],
       "js": [
         "libs/jquery-3.1.1.min.js",
-        "config/features_config.js",
         "features/url_features.js",
         "features/content_features.js",
         "content.js"
@@ -32,7 +31,7 @@
     {
       "resources": [
         "libs/ort.min.js",
-        "../models/phishing_model.onnx",
+        "models/phishing_model.onnx",
         "config/features_config.js",
         "features/url_features.js",
         "features/content_features.js"
@@ -44,6 +43,7 @@
     "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"
   },
   "action": {
-    "default_popup": "./popup/popup.html"
+    "default_popup": "./popup/popup.html",
+    "default_icon": "icon.png"
   }
 }

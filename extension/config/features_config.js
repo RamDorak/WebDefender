@@ -5,11 +5,20 @@ export const featureConfig = {
         contentFeatures: true,
         googleSafeSearch: true
     },
-    weights: {
-        urlFeatures: 0.2,
-        contentFeatures: 0.2,
-        googleSafeSearch: 0.6
-    },
+    weights: (() => {
+        const weights = {
+            urlFeatures: 0.2,
+            contentFeatures: 0.2,
+            googleSafeSearch: 0.6
+        };
+        const totalWeight = Object.values(weights).reduce((sum, weight) => sum + weight, 0);
+        if (totalWeight !== 1) {
+            console.warn("Feature weights do not sum up to 1. Adjusting weights.");
+            const scale = 1 / totalWeight;
+            Object.keys(weights).forEach(key => weights[key] *= scale);
+        }
+        return weights;
+    })(),
     thresholds: {
         phishing: 0.5,
         suspicious: 0.3
