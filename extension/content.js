@@ -1,57 +1,126 @@
-function extractFeatures() {
-    return [
-        isIPInURL(),
-        getURLLength(),
-        isShortenedURL(),
-        hasAtSymbol(),
-        hasPrefixSuffix(),
-        getSubDomainLevel(),
-        getSSLState(),
-        getDomainRegistrationLength(),
-        hasHTTPSInURL(),
-        hasRequestURL(),
-        hasURLAnchor(),
-        hasLinksInTags(),
-        hasSFH(),
-        hasSubmittingToEmail(),
-        isAbnormalURL(),
-        hasMouseoverEffect(),
-        hasRightClickDisabled(),
-        hasPopupWindow(),
-        hasIframeRedirection(),
-        getAgeOfDomain(),
-        hasDNSRecord(),
-        getWebTraffic(),
-        isGoogleIndexed(),
-        hasLinksPointingToPage(),
-        hasStatisticalReport()
-    ];
+// Feature extraction manager
+class FeatureExtractor {
+    constructor() {
+        this.features = [];
+    }
+
+    async extractFeatures() {
+        // Wait for featureConfig to be available
+        if (typeof featureConfig === 'undefined') {
+            console.error("featureConfig is not available");
+            return [];
+        }
+
+        const extractedFeatures = [];
+        
+        // Extract URL features
+        if (featureConfig.enabledFeatures.urlFeatures) {
+            for (const [name, feature] of Object.entries(urlFeatures)) {
+                if (name === 'checkGoogleSafeSearch') {
+                    // Handle async Google SafeSearch feature
+                    const result = await feature();
+                    extractedFeatures.push(result);
+                } else {
+                    extractedFeatures.push(feature());
+                }
+            }
+        }
+        
+        // Extract content features
+        if (featureConfig.enabledFeatures.contentFeatures) {
+            Object.values(contentFeatures).forEach(feature => {
+                extractedFeatures.push(feature());
+            });
+        }
+        
+        return extractedFeatures;
+    }
 }
 
-// Extract features and predict phishing status
+// Main phishing detection function
 async function checkPhishing() {
-    const features = extractFeatures();
+    // Wait for featureConfig to be available
+    if (typeof featureConfig === 'undefined') {
+        console.error("featureConfig is not available");
+        return;
+    }
+
+    const extractor = new FeatureExtractor();
+    const features = await extractor.extractFeatures();
     console.log("Extracted Features:", features);
 
     // Send features to background script for prediction
-    chrome.runtime.sendMessage(
-        { action: "predictPhishing", features: features },
-        (response) => {
-            if (response.error) {
-                console.error("Prediction error:", response.error);
-                return;
+    if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
+        chrome.runtime.sendMessage(
+            { action: "predictPhishing", features: features },
+            (response) => {
+                if (response.error) {
+                    console.error("Prediction error:", response.error);
+                    return;
+                }
+    
+                // Handle different threat levels with detailed messages
+                let message = "";
+                let icon = "";
+                
+                if (response.result === "phishing") {
+                    icon = "⚠️";
+                    message = "Phishing Website Detected!";
+                } else if (response.result === "suspicious") {
+                    icon = "⚠️";
+                    message = "Suspicious Website Detected!";
+                } else {
+                    icon = "✅";
+                    message = "This site appears to be safe.";
+                }
+
+                // Add fallback detection notice if applicable
+                if (response.fallback) {
+                    message += "\n(Using fallback detection method)";
+                }
+
+                // Add confidence score
+                message += `\nConfidence: ${(response.score * 100).toFixed(1)}%`;
+
+                // Display the alert
+                alert(`${icon} ${message}`);
+
+                // Log detailed results to console
+                console.group("WebDefender Detection Results");
+                console.log("Status:", response.result.toUpperCase());
+                console.log("Confidence Score:", (response.score * 100).toFixed(1) + "%");
+                console.log("Detection Method:", response.fallback ? "Fallback (Feature-based + Google SafeSearch)" : "Full (ML + Features + Google SafeSearch)");
+                console.log("URL:", window.location.href);
+                console.log("Features Analysis:");
+                console.log("- URL Features:", features.slice(0, 9));
+                console.log("- Content Features:", features.slice(9, -1));
+                console.log("- Google SafeSearch:", features[features.length - 1]);
+                console.groupEnd();
             }
-            if (response.result === "phishing") {
-                alert("⚠️ Phishing Website Detected!");
-            } else {
-                console.log("✅ This site seems legit.");
-            }
-        }
-    );
+        );
+    } else {
+        console.error("chrome.runtime is not available");
+    }
 }
 
-// Run when page loads
-window.addEventListener("load", checkPhishing);
+// Wait for DOM to be ready and featureConfig to be available
+function initialize() {
+    if (typeof featureConfig === 'undefined') {
+        // If featureConfig is not available, wait and try again
+        setTimeout(initialize, 100);
+        return;
+    }
+    
+    // Run phishing check when featureConfig is available
+    checkPhishing();
+}
+
+// Start initialization when DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initialize);
+} else {
+    initialize();
+}
 
 // Feature Extraction Functions
 function isIPInURL() {

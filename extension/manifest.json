@@ -19,15 +19,25 @@
       "matches": ["<all_urls>"],
       "js": [
         "libs/jquery-3.1.1.min.js",
+        "config/features_config.js",
+        "features/url_features.js",
+        "features/content_features.js",
         "content.js"
-      ]
+      ],
+      "run_at": "document_start",
+      "all_frames": false
     }
   ],
   "web_accessible_resources": [
     {
-      "resources": ["libs/ort.min.js", "../models/phishing_model.onnx"],
-      "matches": ["<all_urls>"],
-      "type": "module"
+      "resources": [
+        "libs/ort.min.js",
+        "../models/phishing_model.onnx",
+        "config/features_config.js",
+        "features/url_features.js",
+        "features/content_features.js"
+      ],
+      "matches": ["<all_urls>"]
     }
   ],
   "content_security_policy": {
