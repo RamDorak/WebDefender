@@ -7,9 +7,6 @@
     "48": "icon.png",
     "128": "icon.png"
   },
-  "background": {
-    "service_worker": "background.js"
-  },
   "content_scripts": [
     {
       "matches": [
@@ -18,7 +15,8 @@
       "js": [
         "jquery-3.1.1.min.js",
         "content.js"
-      ]
+      ],
+      "run_at": "document_end"
     }
   ],
   "web_accessible_resources": [
