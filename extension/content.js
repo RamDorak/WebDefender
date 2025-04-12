@@ -1,4 +1,6 @@
 // Feature extraction manager
+console.log("Content script injected!");
+
 class FeatureExtractor {
     constructor() {
         this.features = [];
@@ -23,6 +25,8 @@ class FeatureExtractor {
                 } else {
                     extractedFeatures.push(feature());
                 }
+                // Log the feature name and value for debugging
+                console.log(`Feature: ${name}, Value: ${result}`);
             }
         }
         
@@ -30,9 +34,12 @@ class FeatureExtractor {
         if (featureConfig.enabledFeatures.contentFeatures) {
             Object.values(contentFeatures).forEach(feature => {
                 extractedFeatures.push(feature());
+                // Log the feature name and value for debugging
+                console.log(`Content Feature: ${feature.name}, Value: ${feature()}`);
             });
         }
-        
+        // Ensure the features array has the same length as the model input size
+        console.log("Extracted Features:", extractedFeatures);
         return extractedFeatures;
     }
 }
@@ -42,7 +49,7 @@ async function checkPhishing() {
     // Wait for featureConfig to be available
     if (typeof featureConfig === 'undefined') {
         console.error("featureConfig is not available");
-        return;
+        return [];
     }
 
     const extractor = new FeatureExtractor();
@@ -50,7 +57,7 @@ async function checkPhishing() {
     console.log("Extracted Features:", features);
 
     // Send features to background script for prediction
-    if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
+    // if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
         chrome.runtime.sendMessage(
             { action: "predictPhishing", features: features },
             (response) => {
@@ -102,9 +109,9 @@ async function checkPhishing() {
                 console.groupEnd();
             }
         );
-    } else {
-        console.error("chrome.runtime is not available");
-    }
+    // } else {
+    //     console.error("chrome.runtime is not available");
+    // }
 }
 
 // Wait for DOM to be ready and featureConfig to be available

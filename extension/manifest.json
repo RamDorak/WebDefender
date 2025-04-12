@@ -31,7 +31,7 @@
     {
       "resources": [
         "libs/ort.min.js",
-        "models/phishing_model.onnx",
+        "../models/phishing_model.onnx",
         "config/features_config.js",
         "features/url_features.js",
         "features/content_features.js"
