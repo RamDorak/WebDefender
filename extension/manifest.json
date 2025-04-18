@@ -1,6 +1,6 @@
 {
     "manifest_version": 3,
-    "name": "PhishGuard - Scam & Phishing Detector",
+    "name": "WebDefender - Scam & Phishing Detector",
     "version": "1.0.0",
     "description": "Analyzes websites for potential phishing and scam indicators and generates security reports",
     "action": {
