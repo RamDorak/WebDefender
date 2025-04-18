@@ -1,29 +1,48 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <title>WebDefender - Check URL</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            padding: 10px;
-            width: 300px;
-        }
-        #resultText {
-            margin-top: 10px;
-            font-weight: bold;
-        }
-        button {
-            padding: 5px 10px;
-            cursor: pointer;
-        }
-    </style>
+  <title>PhishGuard</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="popup.css">
 </head>
 <body>
-    <h3>WebDefender</h3>
-    <p><strong>Current URL:</strong></p>
-    <p id="urlDisplay">Loading...</p>
-    <button id="checkButton">Recheck This Site</button>
-    <p id="resultText"></p>
-    <script src="popup.js"></script>
+  <div class="container">
+    <header>
+      <h1>PhishGuard</h1>
+      <p class="subtitle">Scam & Phishing Detection</p>
+    </header>
+    
+    <div class="current-site">
+      <div class="site-info">
+        <div class="site-url" id="currentUrl">Loading URL...</div>
+        <div class="site-status" id="siteStatus">Analyzing...</div>
+      </div>
+      <div class="risk-score">
+        <div class="score-circle" id="riskScoreCircle">
+          <span id="riskScore">...</span>
+        </div>
+        <div class="score-label">Risk Score</div>
+      </div>
+    </div>
+    
+    <div class="analysis-results">
+      <h2>Security Analysis</h2>
+      <div class="results-container" id="resultsContainer">
+        <div class="loading-indicator">Analyzing website...</div>
+      </div>
+    </div>
+    
+    <div class="actions">
+      <button id="analyzeBtn" class="primary-btn">Analyze Again</button>
+      <button id="reportBtn" class="secondary-btn">View Detailed Report</button>
+    </div>
+    
+    <footer>
+      <p>This analysis is for informational purposes. Always exercise caution online.</p>
+    </footer>
+  </div>
+
+  <script src="popup.js"></script>
 </body>
 </html>
