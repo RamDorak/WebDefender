@@ -1,7 +1,7 @@
 // Background service worker for PhishGuard extension
 
 // Import analyzer modules
-importScripts('../lib/url-analyzer.js', '../lib/content-analyzer.js', '../lib/report-generator.js', '../lib/api-service.js');
+importScripts('../libs/url-analyzer.js', '../libs/content-analyzer.js', '../libs/report-generator.js', '../libs/api-service.js');
 
 // Cache for analysis results
 const analysisCache = {};

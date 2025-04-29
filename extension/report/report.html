@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Website Security Analysis Report</title>
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --danger-color: #e74c3c;
+            --warning-color: #f39c12;
+            --safe-color: #2ecc71;
+            --bg-color: #f8f9fa;
+            --card-bg: #ffffff;
+            --text-color: #333333;
+            --border-color: #e1e4e8;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 0;
+        }
+
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 1rem;
+            text-align: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            position: relative;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1rem;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 1.5rem;
+            overflow: hidden;
+        }
+
+        .card-header {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-body {
+            padding: 1rem;
+        }
+
+        .report-meta {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
+        }
+
+        .meta-item {
+            margin-right: 1rem;
+        }
+
+        .meta-item strong {
+            margin-right: 0.5rem;
+        }
+
+        .gauge-container {
+            text-align: center;
+            margin: 1rem 0;
+        }
+
+        .gauge {
+            width: 200px;
+            height: 100px;
+            margin: 0 auto;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .gauge-background {
+            width: 200px;
+            height: 100px;
+            background: #e6e6e6;
+            border-radius: 100px 100px 0 0;
+        }
+
+        .gauge-fill {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 200px;
+            height: 100px;
+            background: linear-gradient(90deg, #2ecc71, #f39c12, #e74c3c);
+            border-radius: 100px 100px 0 0;
+            transform-origin: center bottom;
+            transition: transform 1s ease-out;
+        }
+
+        .gauge-cover {
+            width: 160px;
+            height: 80px;
+            background: white;
+            border-radius: 80px 80px 0 0;
+            position: absolute;
+            top: 10px;
+            left: 20px;
+        }
+
+        .gauge-value {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .gauge-label {
+            margin-top: 0.5rem;
+            font-size: 1.25rem;
+            font-weight: bold;
+        }
+
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 1rem;
+        }
+
+        .tab {
+            padding: 0.75rem 1.5rem;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+        }
+
+        .tab.active {
+            border-bottom: 3px solid var(--primary-color);
+            font-weight: bold;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .analysis-item {
+            border-left: 4px solid transparent;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            background-color: rgba(0,0,0,0.02);
+            border-radius: 0 4px 4px 0;
+        }
+
+        .analysis-item h3 {
+            margin-top: 0;
+            display: flex;
+            align-items: center;
+        }
+
+        .analysis-item.danger {
+            border-left-color: var(--danger-color);
+        }
+
+        .analysis-item.warning {
+            border-left-color: var(--warning-color);
+        }
+
+        .analysis-item.safe {
+            border-left-color: var(--safe-color);
+        }
+
+        .severity-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .severity-indicator.danger {
+            background-color: var(--danger-color);
+        }
+
+        .severity-indicator.warning {
+            background-color: var(--warning-color);
+        }
+
+        .severity-indicator.safe {
+            background-color: var(--safe-color);
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            color: white;
+            font-weight: bold;
+            font-size: 0.875rem;
+        }
+
+        .status-badge.danger {
+            background-color: var(--danger-color);
+        }
+
+        .status-badge.warning {
+            background-color: var(--warning-color);
+        }
+
+        .status-badge.safe {
+            background-color: var(--safe-color);
+        }
+
+        .chart-container {
+            height: 300px;
+            margin: 2rem 0;
+        }
+
+        .summary-stats {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .stat-box {
+            background-color: white;
+            border-radius: 8px;
+            padding: 1rem;
+            flex: 1;
+            min-width: 200px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            margin: 0.5rem 0;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.875rem;
+        }
+
+        .actions {
+            display: flex;
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        @media (max-width: 768px) {
+            .summary-stats {
+                flex-direction: column;
+            }
+            
+            .meta-item {
+                margin-bottom: 0.5rem;
+            }
+            
+            .gauge {
+                width: 150px;
+                height: 75px;
+            }
+            
+            .gauge-background, .gauge-fill {
+                width: 150px;
+                height: 75px;
+            }
+            
+            .gauge-cover {
+                width: 120px;
+                height: 60px;
+                top: 7.5px;
+                left: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Website Security Analysis Report</h1>
+    </header>
+
+    <div class="container">
+        <div class="card">
+            <div class="card-header">
+                Website Information
+            </div>
+            <div class="card-body">
+                <div class="report-meta">
+                    <div class="meta-item">
+                        <strong>URL:</strong> <span id="website-url">https://example.com</span>
+                    </div>
+                    <div class="meta-item">
+                        <strong>Analysis Date:</strong> <span id="analysis-date">Loading...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                Security Overview
+            </div>
+            <div class="card-body">
+                <div class="gauge-container">
+                    <div class="gauge">
+                        <div class="gauge-background"></div>
+                        <div class="gauge-fill" id="gauge-fill"></div>
+                        <div class="gauge-cover"></div>
+                        <div class="gauge-value" id="risk-score">0</div>
+                    </div>
+                    <div class="gauge-label">Risk Score</div>
+                    <div class="status-badge" id="status-badge">Analyzing...</div>
+                </div>
+
+                <div class="summary-stats">
+                    <div class="stat-box">
+                        <div class="stat-label">High Risk Issues</div>
+                        <div class="stat-value" id="high-risk-count">0</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Warning Issues</div>
+                        <div class="stat-value" id="warning-count">0</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Safe Checks</div>
+                        <div class="stat-value" id="safe-count">0</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                Detailed Analysis
+            </div>
+            <div class="card-body">
+                <div class="tabs">
+                    <div class="tab active" data-tab="all">All Findings</div>
+                    <div class="tab" data-tab="url">URL Analysis</div>
+                    <div class="tab" data-tab="content">Content Analysis</div>
+                    <div class="tab" data-tab="api">API Analysis</div>
+                </div>
+
+                <div class="tab-content active" id="all-tab">
+                    <div id="all-findings-list">
+                        <div class="analysis-item loading">Loading findings...</div>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="url-tab">
+                    <div id="url-findings-list">
+                        <div class="analysis-item loading">Loading URL analysis...</div>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="content-tab">
+                    <div id="content-findings-list">
+                        <div class="analysis-item loading">Loading content analysis...</div>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="api-tab">
+                    <div id="api-findings-list">
+                        <div class="analysis-item loading">Loading API analysis...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                Actions
+            </div>
+            <div class="card-body">
+                <div class="actions">
+                    <button id="export-pdf">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                            <polyline points="10 9 9 9 8 9"></polyline>
+                        </svg>
+                        Export as PDF
+                    </button>
+                    <button id="export-json">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                            <polyline points="10 9 9 9 8 9"></polyline>
+                        </svg>
+                        Export as JSON
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="report.js"></script>
+</body>
+</html>

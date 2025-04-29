@@ -6,15 +6,16 @@
  * @return {Promise<Object>} Analysis results
  */
 async function analyzeContent(tabId) {
-    try {
-      // Execute content script in the tab to analyze page content
-      const contentResults = await chrome.tabs.executeScript(tabId, {
-        code: `(${contentAnalysisScript})();`
-      });
-      
-      // The content script returns an array with a single item
-      return contentResults[0];
-    } catch (error) {
+  try {
+    // Execute content script in the tab to analyze page content
+    const [contentResult] = await chrome.scripting.executeScript({
+      target: { tabId: tabId },
+      func: contentAnalysisScript,
+    });
+  
+    // The content script returns its result directly
+    return contentResult.result;
+  } catch (error) {
       console.error('Content analysis error:', error);
       return {
         results: [{
