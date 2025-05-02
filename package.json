@@ -1,0 +1,26 @@
+{
+  "name": "webdefender",
+  "version": "1.0.0",
+  "description": "A multi-layered phishing/ malware defender extension for Google Chrome",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/RamDorak/WebDefender.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/RamDorak/WebDefender/issues"
+  },
+  "homepage": "https://github.com/RamDorak/WebDefender#readme",
+  "dependencies": {
+    "jsdom": "^26.1.0"
+  }
+}
