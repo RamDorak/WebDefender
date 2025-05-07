@@ -185,6 +185,11 @@
             border-left-color: var(--safe-color);
         }
 
+        .analysis-item.critical {
+            border-left-width: 6px;
+            background-color: rgba(231, 76, 60, 0.05);
+        }
+
         .severity-indicator {
             display: inline-block;
             width: 12px;
@@ -280,6 +285,21 @@
 
         button:hover {
             opacity: 0.9;
+        }
+
+        .ml-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            background-color: var(--primary-color);
+            color: white;
+            font-size: 0.75rem;
+            margin-left: 8px;
+            vertical-align: middle;
+        }
+
+        .analysis-item.critical .ml-badge {
+            background-color: var(--danger-color);
         }
 
         @media (max-width: 768px) {

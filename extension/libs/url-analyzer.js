@@ -60,24 +60,27 @@ async function analyzeUrl(url, tabId) {
       
       results.push({
         title: "Machine Learning Analysis",
-        description:
-          mlResult.prediction === 1
-            ? "URL predicted as phishing by ML model."
-            : "URL predicted as safe by ML model.",
+        description: mlResult.prediction === 1
+          ? "WARNING: This website has been identified as potentially malicious by our ML model. Exercise extreme caution!"
+          : "This website appears safe according to our ML model.",
         severity: mlResult.prediction === 1 ? "danger" : "safe",
-        riskFactor: mlResult.prediction === 1 ? 60 : 0,
+        riskFactor: mlResult.prediction === 1 ? 85 : 0,
         extraChecks: mlResult.extraChecks,
-        isMLResult: true
+        isMLResult: true,
+        prediction: mlResult.prediction,
+        isCritical: mlResult.prediction === 1
       });
     } catch (error) {
       console.error("ML analysis error:", error);
       results.push({
         title: "Machine Learning Analysis",
-        description: "Failed to perform ML analysis.",
+        description: "Failed to perform ML analysis. Proceed with caution.",
         severity: "warning",
         riskFactor: 30,
         extraChecks: {},
-        isMLResult: true
+        isMLResult: true,
+        prediction: -1,
+        isCritical: false
       });
     }
 

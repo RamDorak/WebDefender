@@ -39,6 +39,15 @@ function updateRiskGauge(score) {
     const degrees = (score / 100) * 180;
     gaugeFill.style.transform = `rotate(${degrees}deg)`;
     riskScore.textContent = score;
+    
+    // Update gauge color based on score
+    if (score >= 85) {
+        gaugeFill.style.background = 'var(--danger-color)';
+    } else if (score >= 50) {
+        gaugeFill.style.background = 'var(--warning-color)';
+    } else {
+        gaugeFill.style.background = 'var(--safe-color)';
+    }
 }
 
 function updateStatusBadge(status) {
@@ -47,12 +56,12 @@ function updateStatusBadge(status) {
     
     // Set appropriate class based on status
     badge.className = 'status-badge';
-    if (status.includes('Safe')) {
-        badge.classList.add('safe');
-    } else if (status.includes('Caution')) {
-        badge.classList.add('warning');
-    } else {
+    if (status.includes('Phishing Detected') || status.includes('High Risk')) {
         badge.classList.add('danger');
+    } else if (status.includes('Safe')) {
+        badge.classList.add('safe');
+    } else {
+        badge.classList.add('warning');
     }
 }
 
@@ -103,6 +112,10 @@ function createAnalysisItemElement(item) {
     const div = document.createElement('div');
     div.className = `analysis-item ${item.severity}`;
     
+    if (item.isCritical) {
+        div.classList.add('critical');
+    }
+    
     const severityIndicator = document.createElement('div');
     severityIndicator.className = `severity-indicator ${item.severity}`;
     
@@ -112,6 +125,13 @@ function createAnalysisItemElement(item) {
     
     const description = document.createElement('p');
     description.textContent = item.description;
+    
+    if (item.isMLResult) {
+        const mlBadge = document.createElement('span');
+        mlBadge.className = 'ml-badge';
+        mlBadge.textContent = 'ML Analysis';
+        title.appendChild(mlBadge);
+    }
     
     div.appendChild(title);
     div.appendChild(description);

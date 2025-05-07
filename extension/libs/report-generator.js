@@ -17,17 +17,28 @@ function generateReport(url, urlAnalysis, contentAnalysis, apiAnalysis) {
         ...apiAnalysis.results
       ];
       
-      // Calculate weighted risk score
-      // URL: 30%, Content: 40%, API checks: 30%
-      const overallRiskScore = Math.round(
-        (urlAnalysis.riskScore * 0.3) + 
-        (contentAnalysis.riskScore * 0.4) + 
-        (apiAnalysis.riskScore * 0.3)
-      );
+      // Find ML result if it exists
+      const mlResult = allAnalysisItems.find(item => item.isMLResult);
+      
+      // Calculate overall risk score based on ML result
+      let overallRiskScore;
+      if (mlResult && mlResult.prediction === 1) {
+        // If ML predicts phishing, use high risk score
+        overallRiskScore = 85;
+      } else {
+        // Otherwise calculate weighted average
+        overallRiskScore = Math.round(
+          (urlAnalysis.riskScore * 0.3) + 
+          (contentAnalysis.riskScore * 0.4) + 
+          (apiAnalysis.riskScore * 0.3)
+        );
+      }
       
       // Determine overall status based on risk score
       let status;
-      if (overallRiskScore < 20) {
+      if (mlResult && mlResult.prediction === 1) {
+        status = 'High Risk - Phishing Detected';
+      } else if (overallRiskScore < 20) {
         status = 'Likely Safe';
       } else if (overallRiskScore < 50) {
         status = 'Exercise Caution';
@@ -37,8 +48,13 @@ function generateReport(url, urlAnalysis, contentAnalysis, apiAnalysis) {
         status = 'High Risk - Avoid';
       }
       
-      // Sort analysis items by severity (danger first, then warning, then safe)
+      // Sort analysis items by severity and ML results first
       const sortedItems = allAnalysisItems.sort((a, b) => {
+        // ML results always come first
+        if (a.isMLResult && !b.isMLResult) return -1;
+        if (!a.isMLResult && b.isMLResult) return 1;
+        
+        // Then sort by severity
         const severityOrder = { danger: 0, warning: 1, safe: 2 };
         return severityOrder[a.severity] - severityOrder[b.severity];
       });
@@ -48,13 +64,14 @@ function generateReport(url, urlAnalysis, contentAnalysis, apiAnalysis) {
         riskScore: overallRiskScore,
         status: status,
         analysisItems: sortedItems,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        isMLPhishing: mlResult && mlResult.prediction === 1
       };
     } catch (error) {
       console.error('Report generation error:', error);
       return {
         url: url,
-        riskScore: 50, // Default moderate risk
+        riskScore: 50,
         status: 'Analysis Incomplete',
         analysisItems: [{
           title: 'Error',
@@ -64,4 +81,4 @@ function generateReport(url, urlAnalysis, contentAnalysis, apiAnalysis) {
         timestamp: new Date().toISOString()
       };
     }
-  }
+}
