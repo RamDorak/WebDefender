@@ -8,7 +8,13 @@ const analysisCache = {};
 
 // Listen for messages from popup or content scripts
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.action === 'analyzeUrl') {
+  if (message.action === 'logMLResults') {
+    console.log("ML Analysis Results:", message.results);
+    sendResponse({ success: true });
+  } else if (message.action === 'logMLError') {
+    console.error("ML Analysis Error:", message.error);
+    sendResponse({ success: true });
+  } else if (message.action === 'analyzeUrl') {
     analyzeWebsite(message.url, message.tabId)
       .then(results => {
         // Cache the results
@@ -48,7 +54,7 @@ async function analyzeWebsite(url, tabId) {
   
   try {
     // Step 1: Analyze the URL
-    const urlAnalysis = await analyzeUrl(url);
+    const urlAnalysis = await analyzeUrl(url, tabId);
     
     // Step 2: Get and analyze the page content
     const contentAnalysis = await analyzeContent(tabId);

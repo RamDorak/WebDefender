@@ -1,7 +1,7 @@
 {
     "manifest_version": 3,
     "name": "WebDefender - Scam & Phishing Detector",
-    "version": "1.0.0",
+    "version": "2.0.1",
     "description": "Analyzes websites for potential phishing and scam indicators and generates security reports",
     "action": {
       "default_popup": "popup/popup.html",

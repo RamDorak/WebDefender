@@ -3,9 +3,10 @@ importScripts("../libs/machine-learning-approach.js");
 /**
  * Analyzes a URL for phishing indicators
  * @param {string} url - The URL to analyze
+ * @param {number} tabId - The ID of the tab being analyzed
  * @return {Promise<Object>} Analysis results
  */
-async function analyzeUrl(url) {
+async function analyzeUrl(url, tabId) {
   try {
     // Create URL object for parsing
     const urlObj = new URL(url);
@@ -31,12 +32,32 @@ async function analyzeUrl(url) {
 
     // 5. ML-based analysis
     try {
-      // Fetch the HTML content
-      const response = await fetch(url);
-      const html = await response.text();
+      // Get DOM features from content script
+      const domFeatures = await new Promise((resolve, reject) => {
+        chrome.tabs.sendMessage(tabId, { action: "getDOMFeatures" }, (response) => {
+          if (chrome.runtime.lastError) {
+            reject(new Error(chrome.runtime.lastError.message));
+          } else {
+            resolve(response);
+          }
+        });
+      });
+
+      // Run ML analysis in content script
+      const mlResult = await new Promise((resolve, reject) => {
+        chrome.tabs.sendMessage(tabId, { 
+          action: "runMLAnalysis",
+          url: url,
+          domFeatures: domFeatures
+        }, (response) => {
+          if (chrome.runtime.lastError) {
+            reject(new Error(chrome.runtime.lastError.message));
+          } else {
+            resolve(response);
+          }
+        });
+      });
       
-      // Perform ML analysis
-      const mlResult = await ml_results(url, html);
       results.push({
         title: "Machine Learning Analysis",
         description:
@@ -44,8 +65,9 @@ async function analyzeUrl(url) {
             ? "URL predicted as phishing by ML model."
             : "URL predicted as safe by ML model.",
         severity: mlResult.prediction === 1 ? "danger" : "safe",
-        riskFactor: mlResult.prediction === 1 ? 30 : 0,
+        riskFactor: mlResult.prediction === 1 ? 60 : 0,
         extraChecks: mlResult.extraChecks,
+        isMLResult: true
       });
     } catch (error) {
       console.error("ML analysis error:", error);
@@ -53,8 +75,9 @@ async function analyzeUrl(url) {
         title: "Machine Learning Analysis",
         description: "Failed to perform ML analysis.",
         severity: "warning",
-        riskFactor: 0,
+        riskFactor: 30,
         extraChecks: {},
+        isMLResult: true
       });
     }
 
@@ -198,13 +221,27 @@ function checkUrlLength(url) {
 function calculateUrlRiskScore(results) {
   let totalRiskFactor = 0;
   let maxPossibleRisk = 0;
+  let mlResult = null;
 
-  // Sum up risk factors
+  // First, find ML result if it exists
   results.forEach((result) => {
-    totalRiskFactor += result.riskFactor || 0;
-    // Estimate max possible risk based on check type
-    // This is a simplified approach
-    maxPossibleRisk += 25;
+    if (result.isMLResult) {
+      mlResult = result;
+    }
+  });
+
+  // If ML predicts phishing, significantly increase the risk
+  if (mlResult && mlResult.prediction === 1) {
+    totalRiskFactor = 70; // Base risk from ML prediction
+    maxPossibleRisk = 100;
+  }
+
+  // Add other risk factors with reduced weight
+  results.forEach((result) => {
+    if (!result.isMLResult) { // Only consider non-ML results
+      totalRiskFactor += (result.riskFactor || 0) * 0.3; // Reduce weight of other factors
+      maxPossibleRisk += 25 * 0.3; // Reduce max possible risk from other factors
+    }
   });
 
   // Convert to a 0-100 scale
