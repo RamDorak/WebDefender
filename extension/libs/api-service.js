@@ -29,7 +29,7 @@ async function checkExternalApis(url) {
         results: results,
         riskScore: riskScore
       };
-    } catch (error) {
+    } catch (error) { // error handling
       console.error('API check error:', error);
       return {
         results: [{
@@ -38,7 +38,7 @@ async function checkExternalApis(url) {
           severity: 'warning',
           riskFactor: 10
         }],
-        riskScore: 50 // Default moderate risk due to analysis failure
+        riskScore: 50 // Default
       };
     }
   }
@@ -47,40 +47,45 @@ async function checkExternalApis(url) {
    * Simulates checking domain age
    * In a real extension, this would call a WHOIS API
    */
-  async function checkDomainAge(url) {
-    // Extract domain from URL
-    const domain = new URL(url).hostname;
-    
-    // Simulate API call with a delay
-    await new Promise(resolve => setTimeout(resolve, 300));
-    
-    // For demo purposes, we'll use a deterministic "random" value based on domain name
-    const domainSum = domain.split('').reduce((sum, char) => sum + char.charCodeAt(0), 0);
-    const simulatedDomainAgeMonths = domainSum % 60; // 0-59 months
-    
-    let severity, description, riskFactor;
-    
-    if (simulatedDomainAgeMonths < 1) {
-      severity = 'danger';
-      description = `This domain was registered very recently (less than 1 month ago). New domains are frequently used for phishing.`;
-      riskFactor = 30;
-    } else if (simulatedDomainAgeMonths < 6) {
-      severity = 'warning';
-      description = `This domain was registered ${simulatedDomainAgeMonths} months ago. Relatively new domains should be treated with caution.`;
-      riskFactor = 15;
-    } else {
-      severity = 'safe';
-      description = `This domain was registered ${simulatedDomainAgeMonths} months ago. Well-established domains are generally more trustworthy.`;
-      riskFactor = 0;
-    }
-    
-    return {
-      title: 'Domain Age',
-      description,
-      severity,
-      riskFactor
-    };
+  async function checkDomainAge(domain) {
+      const response = await fetch('http://192.168.1.3:3000/domain-age', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ domain })
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+          console.log(`${domain} is ${data.months} months old`);
+          // return data.months;
+      } else {
+          console.warn('Error:', data.error);
+          // return null;
+      }
+
+      if (data.months < 1) {
+        severity = 'danger';
+        description = `This domain was registered very recently (less than 1 month ago). New domains are frequently used for phishing.`;
+        riskFactor = 30;
+      } else if (data.months < 6) {
+        severity = 'warning';
+        description = `This domain was registered ${data.months} months ago. Relatively new domains should be treated with caution.`;
+        riskFactor = 15;
+      } else {
+        severity = 'safe';
+        description = `This domain was registered ${data.months} months ago. Well-established domains are generally more trustworthy.`;
+        riskFactor = 0;
+      }
+
+      return {
+        title: 'Domain Age',
+        description,
+        severity,
+        riskFactor
+      };
+
   }
+
   
   /**
    * Simulates checking various blacklists
@@ -89,17 +94,55 @@ async function checkExternalApis(url) {
   async function checkBlacklists(url) {
     // Simulate API call with a delay
     await new Promise(resolve => setTimeout(resolve, 500));
+
+    console.log(`checkBlacklists: Checking URL: ${url} with Safe Browse API`); // Log the URL being checked
+
     
     // For demo purposes: use a hash of the domain to determine if it's "blacklisted"
     const domain = new URL(url).hostname;
-    const domainHash = domain.split('').reduce((hash, char) => {
-      return ((hash << 5) - hash) + char.charCodeAt(0);
-    }, 0);
+    // Use Google Safe Browsing API to check if the URL is blacklisted
     
-    // Determine if "blacklisted" based on hash
-    // This gives about 10% of domains showing as blacklisted for demo purposes
-    const isBlacklisted = Math.abs(domainHash % 10) === 0;
+    const API_KEY = 'AIzaSyDjy9RKHT_krjCwx5xR60wJXMsgc2Gw9Eo';
+    const apiUrl = 'https://safebrowsing.googleapis.com/v4/threatMatches:find?key=' + API_KEY;
+
+    const requestBody = {
+      client: {
+        clientId: "webdefender-extension",
+        clientVersion: "1.0"
+      },
+      threatInfo: {
+        threatTypes: ["MALWARE", "SOCIAL_ENGINEERING", "UNWANTED_SOFTWARE", "POTENTIALLY_HARMFUL_APPLICATION"],
+        platformTypes: ["ANY_PLATFORM"],
+        threatEntryTypes: ["URL"],
+        threatEntries: [
+          { "url":url }
+        ]
+      }
+    };
+
+    let isBlacklisted = false;
+    try {
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        body: JSON.stringify(requestBody),
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        isBlacklisted = !!(data && data.matches && data.matches.length > 0);
+      } else {
+      // If API fails, treat as not blacklisted (or handle as warning)
+        isBlacklisted = false;
+      }
+    } catch (e) {
+      // Network/API error, treat as not blacklisted (or handle as warning)
+        isBlacklisted = false;
+    }
     
+    console.log(isBlacklisted);
+
     if (isBlacklisted) {
       return {
         title: 'Security Databases',
@@ -122,44 +165,45 @@ async function checkExternalApis(url) {
    * In a real extension, this would use more sophisticated checks
    */
   async function checkSslCertificate(url) {
-    // Only check SSL for HTTPS URLs
-    if (!url.startsWith('https://')) {
+    try {
+      const response = await fetch('http://192.168.1.3:3000/check-ssl', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url })
+      });
+
+      const data = await response.json();
+
+      if (!data.hasSSL) {
+        return {
+          title: 'SSL Certificate',
+          description: 'No SSL certificate detected or HTTPS connection failed.',
+          severity: 'warning',
+          riskFactor: 20
+        };
+      }
+
+      if (data.expired) {
+        return {
+          title: 'SSL Certificate',
+          description: `SSL certificate is expired (Valid To: ${data.validTo}).`,
+          severity: 'danger',
+          riskFactor: 25
+        };
+      }
+
       return {
         title: 'SSL Certificate',
-        description: 'No SSL certificate (site uses HTTP, not HTTPS).',
-        severity: 'warning',
-        riskFactor: 20
-      };
-    }
-    
-    // Simulate API call with a delay
-    await new Promise(resolve => setTimeout(resolve, 200));
-    
-    // For demo purposes, simulate different certificate statuses
-    const domain = new URL(url).hostname;
-    const domainSum = domain.split('').reduce((sum, char) => sum + char.charCodeAt(0), 0);
-    const certificateStatus = domainSum % 10; // 0-9
-    
-    if (certificateStatus < 7) {
-      return {
-        title: 'SSL Certificate',
-        description: 'Valid SSL certificate detected. Connection is encrypted.',
+        description: `Valid SSL certificate issued by ${data.issuer}.`,
         severity: 'safe',
         riskFactor: 0
       };
-    } else if (certificateStatus < 9) {
+    } catch (err) {
       return {
         title: 'SSL Certificate',
-        description: 'SSL certificate has issues (self-signed or not from trusted authority).',
-        severity: 'warning',
-        riskFactor: 15
-      };
-    } else {
-      return {
-        title: 'SSL Certificate',
-        description: 'Invalid or expired SSL certificate detected. Connection may not be secure.',
+        description: 'Error checking SSL certificate: ' + err.message,
         severity: 'danger',
-        riskFactor: 25
+        riskFactor: 15
       };
     }
   }
